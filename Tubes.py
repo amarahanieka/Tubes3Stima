@@ -94,14 +94,26 @@ def reply(command):
     else:
         print("punten kang aing teu ngertos maneh ngomong naon")
 
+def patternMatching(pattern,teks):#Boyer-Moore
+    m=len(pattern)
+    n=len(teks)
+    i=m-1
+    dict={}
+    for a in range(m):
+        dict[pattern[a]]=a
 
-
-arrayDB = bacaDB()
-tambahTugas('4/24/2021','OOP','Tubes','engimon')
-tampilTugas()
-updateTanggal(28, "4/28/2021")
-tampilTugas()
-done(25)
-tampilTugas()
-tampilHelp()
-chat()
+    if(i>n-1):
+        return -1
+    j=m-1
+    while (i<n):
+        if(pattern[j]==teks[i]):
+            if(j==0):
+                return i
+            else:
+                i=i-1
+                j=j-1
+        else:
+            lo = dict[teks[i]]
+            i = i + m - min(j, 1+lo)
+            j = m-1
+    return -1
