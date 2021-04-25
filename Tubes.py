@@ -217,8 +217,6 @@ def reply(command):
                 days=re.findall("\d+",deadlineMinggu[0])[0]
                 listDeadline = tampilTugasDayToDay(currdate+int(days)*7,currdate)
                 printed=True
-                print(days)
-                print(listDeadline)
             elif(todayDeadline):
                 listDeadline = tampilTugasDayToDay(currdate)
                 printed=True
@@ -226,22 +224,29 @@ def reply(command):
                 listDeadline = tampilTugasDayToDay(DatetoInt(fromDaytoDay[1]),DatetoInt(fromDaytoDay[0]))
                 printed=True
 
+            listDeadline2=[]
             if(y!=[]):
-                listDeadline=[]
                 for item in listDeadline:
-                    if(item[3]==y[0]):
-                        listDeadline.append(item)
-
-            if (listDeadline!=[]):
-                for item in listDeadline:
-                    print(item)
-
-            if(listDeadline==[]):
-                if(x[0]=="deadline" and printed==False):
-                    tampilTugas()
-                    print()
+                    if(item[3].lower()==y[0]):
+                        listDeadline2.append(item)
+                if(listDeadline2!=[]):
+                    for row in listDeadline2:
+                        print(row)
                 else:
-                    print("Tidak ada deadline yang ditemukan pada rentang tersebut")
+                    print("tidak ada deadline yang ditemukan")
+
+            else:
+                if (listDeadline!=[]):
+                    for item in listDeadline:
+                        print(item)
+
+                if(listDeadline==[]):
+                    if(x[0]=="deadline" and printed==False):
+                        tampilTugas()
+                        print()
+                    else:
+                        print("Tidak ada deadline yang ditemukan pada rentang tersebut")
+
         else:
             print("sepertinya format tidak dikenali")
 
