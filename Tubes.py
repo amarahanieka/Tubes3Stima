@@ -1,12 +1,12 @@
 import csv
 import re
+import datetime
 
-fungsi =    {'tambahTugas': r'.*\s*tambah tugas*',
-            'tampilTugas': r'tampilkan*',
-            'tampilDeadline': r'.*cube.*(\d+)',
-            'updateTanggal': r'.*cube.*(\d+)',
-            'done': r'.*cube.*(\d+)'
-                }
+currdate = (datetime.datetime.now()).timetuple().tm_yday
+
+def DatetoInt(tanggal):
+    tanggal = datetime.datetime.strptime(tanggal,"%m/%d/%Y")
+    return tanggal.timetuple().tm_yday
 
 def bacaDB():
     with open('databasenew.csv',newline='') as DB:
@@ -19,7 +19,7 @@ def bacaDB():
 def tambahTugas(tanggal, matkul, jenis, topik):
     with open('databasenew.csv','a',newline='') as DB:
         writer = csv.writer(DB)
-        newTugas = [str(len(arrayDB)),tanggal,matkul,jenis,topik,"FALSE"]
+        newTugas = [str(len(arrayDB)),tanggal,matkul.upper(),jenis.upper(),topik,"FALSE"]
         arrayDB.append(newTugas)
         writer.writerow(newTugas)
 
@@ -28,10 +28,20 @@ def tampilTugas():
         if(row[5]=="FALSE"):
             print(row)
 
+def tampilTugasDayToDay(hariDua, hariSatu=currdate):
+    temp=[]
+    for row in arrayDB:
+        if(row[5]=="FALSE"):
+            deadlineTugas = datetime.datetime.strptime(row[1],"%m/%d/%Y")
+            deadlineTugas = deadlineTugas.timetuple().tm_yday
+            if((deadlineTugas >= hariSatu) and (deadlineTugas <= hariDua)):
+                temp.append(row)
+    return temp
+
 def tampilDeadline(jenis,matkul):
     isExist=False
     for row in arrayDB:
-        if(row[2]==matkul && row[3]==jenis):
+        if(row[2].lower()==matkul and row[3].lower()==jenis):
             print(row[1],row[4])
             isExist=True
     if isExist==False:
@@ -44,6 +54,12 @@ def updateTanggal(id,tanggal):
     with open('databasenew.csv', 'w', newline='') as file:
         mywriter = csv.writer(file, delimiter=',')
         mywriter.writerows(arrayDB)
+
+def isInDB(tanggal,matkul,jenis):
+    for row in arrayDB:
+        if (row[1]==tanggal and row[2].lower()==matkul and row[3].lower()==jenis):
+            return True
+    return False
 
 def done(id):
     for row in arrayDB:
@@ -102,13 +118,16 @@ def patternMatching(pattern,teks):#Boyer-Moore
     return False
 
 #keyword jenis task
-task=["ujian","kuis","tugas","tubes","tucil"]
+tasks=["ujian","kuis","tugas","tubes","tucil"]
 
 #keyword satuan waktu:
 times=["hari","minggu"]
 
 #keyword selesai:
 doneList=["sudah","telah","selesai","beres"]
+
+#taskList
+taskList = "tugas|tubes|tucil|ujian|kuis"
 
 #list pencocokan
 def isNewTask(input):
@@ -118,7 +137,7 @@ def isNewTask(input):
     return False
 
 def isDeadlineList(input):
-    return (patternMatching("deadline",input)==True)
+    return (patternMatching("apa saja",input))
 
 def isDeadlineTask(input):
     return  (patternMatching("kapan",input))
@@ -133,7 +152,7 @@ def isDoneTask(input):
     return False
 
 def isHelp(input):
-    return (patternMatching("bantu",input) || patternMatching("help",input))
+    return ((patternMatching("bantu",input)) or (patternMatching("help",input)))
 
 def chat():
     command = input().lower()
@@ -142,11 +161,13 @@ def chat():
         command = input().lower()
 
 def reply(command):
+
     if (isHelp(command)):
         tampilHelp()
+
     elif (isUndurTask(command)):
         x = re.findall("task \d+", command)
-        y = re.findall("../../....")
+        y = re.findall("../../....",command)
         if (x == []):
             print("maaf sepertinya anda lupa menulis task mana yang ingin diundur")
         elif (y == []):
@@ -154,17 +175,21 @@ def reply(command):
         else:
             z = re.findall("\d+",x[0])
             updateTanggal(z[0],y[0])
+            print("Task telah diundur")
+
     elif(isDoneTask(command)):
         x = re.findall("task \d+", command)
         if (x==[]):
             print("Apakah Anda lupa memasukkan task mana yang sudah selesai dikerjakan?")
         else:
-            id=re.findall("\d+",x[0])
+            id=re.findall("\d+",x[0])[0]
             done(id)
+            print("oke task sudah ditandai sebagai telah selesai")
+
     elif(isDeadlineTask(command)):
-        x = re.findall("tugas|tubes|tucil|ujian|kuis")
-        y = re.findall("if\d+|ku\d+")
-        if(x==[] && y==[]):
+        x = re.findall(taskList,command)
+        y = re.findall("if\d+|ku\d+",command)
+        if(x==[] and y==[]):
             print("sepertinya kami tidak mengenal format yang anda masukkan")
         elif (x==[]):
             print("jenis task apa yang ingin anda ketahui deadlinenya")
@@ -172,17 +197,73 @@ def reply(command):
             print("mata kuliah apa yang ingin anda ketahui deadline ",x[0],"nya")
         else:
             tampilDeadline(x[0],y[0])
+
     elif(isDeadlineList(command)):
-        x
+        x = re.findall("deadline",command)
+        y = re.findall(taskList,command)
+        printed=False
+        if(x!=[] or y!=[]):
+            deadlineHari=re.findall("\d+ hari ke\s*depan",command)
+            deadlineMinggu=re.findall("\d+ minggu ke\s*depan",command)
 
+            todayDeadline = re.findall("hari ini",command)
+            fromDaytoDay = re.findall("../../....",command)
+            listDeadline=[]
+            if (deadlineHari):
+                days=re.findall("\d+",deadlineHari[0])[0]
+                listDeadline = tampilTugasDayToDay(currdate+int(days),currdate)
+                printed=True
+            elif(deadlineMinggu):
+                days=re.findall("\d+",deadlineMinggu[0])[0]
+                listDeadline = tampilTugasDayToDay(currdate+int(days)*7,currdate)
+                printed=True
+                print(days)
+                print(listDeadline)
+            elif(todayDeadline):
+                listDeadline = tampilTugasDayToDay(currdate)
+                printed=True
+            elif(fromDaytoDay):
+                listDeadline = tampilTugasDayToDay(DatetoInt(fromDaytoDay[1]),DatetoInt(fromDaytoDay[0]))
+                printed=True
 
+            if(y!=[]):
+                listDeadline=[]
+                for item in listDeadline:
+                    if(item[3]==y[0]):
+                        listDeadline.append(item)
+
+            if (listDeadline!=[]):
+                for item in listDeadline:
+                    print(item)
+
+            if(listDeadline==[]):
+                if(x[0]=="deadline" and printed==False):
+                    tampilTugas()
+                    print()
+                else:
+                    print("Tidak ada deadline yang ditemukan pada rentang tersebut")
+        else:
+            print("sepertinya format tidak dikenali")
+
+    elif(isNewTask(command)):
+        tanggal = re.findall("../../....",command)
+        matkul = re.findall("if\d+|ku\d+",command)
+        jenis = re.findall(taskList,command)
+        topic_quoted = re.findall("'.+'",command) # topik dibatasi single quote mark
+        if topic_quoted!=[]:
+            topik = re.sub("'","",topic_quoted[0])
+        else:
+            topik=""
+        if(tanggal!=[] and matkul!=[] and jenis!=[] and topik!=[]):
+            if(isInDB(tanggal[0],matkul[0],jenis[0])==True):
+                print("Task tersebut sudah tercatat, insertion failed")
+            else:
+                tambahTugas(tanggal[0], matkul[0], jenis[0], topik)
+                print("insertion success")
     else:
         print("punten kang aing teu ngertos maneh ngomong naon")
 
 
 
-
-
-
-
-
+arrayDB=bacaDB()
+chat()
