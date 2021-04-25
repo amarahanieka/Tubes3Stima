@@ -1,12 +1,15 @@
 import csv
 import re
+import datetime
 
 fungsi =    {'tambahTugas': r'.*\s*tambah tugas*',
-            'tampilTugas': r'tampilkan*',
+            'tampilTugas': r'.*tampilkan*',
             'tampilDeadline': r'.*cube.*(\d+)',
             'updateTanggal': r'.*cube.*(\d+)',
-            'done': r'.*cube.*(\d+)'
+            'done': r'.*cube.*(\d+)',
+            'help': r'.*bantu.*'
                 }
+currdate = (datetime.datetime.now()).timetuple().tm_yday
 
 def bacaDB():
     with open('databasenew.csv',newline='') as DB:
@@ -16,6 +19,30 @@ def bacaDB():
             listMatkul.append(row)
     return listMatkul
 
+def patternMatching(pattern,teks):#Boyer-Moore
+    m=len(pattern)
+    n=len(teks)
+    i=m-1
+    dict={}
+    for a in range(m):
+        dict[pattern[a]]=a
+
+    if(i>n-1):
+        return -1
+    j=m-1
+    while (i<n):
+        if(pattern[j]==teks[i]):
+            if(j==0):
+                return i
+            else:
+                i=i-1
+                j=j-1
+        else:
+            lo = dict[teks[i]]
+            i = i + m - min(j, 1+lo)
+            j = m-1
+    return -1
+    
 def tambahTugas(tanggal, matkul, jenis, topik):
     with open('databasenew.csv','a',newline='') as DB:
         writer = csv.writer(DB)
@@ -28,14 +55,23 @@ def tampilTugas():
         if(row[5]=="FALSE"):
             print(row)
 
-def tampilDeadline(jenis,matkul):
-    isExist=False
+def tampilTugasDayToDay(hariDua, hariSatu=currdate):
     for row in arrayDB:
-        if(row[2]==matkul && row[3]==jenis):
-            print(row[1],row[4])
-            isExist=True
-    if isExist==False:
-        print("tidak ada deadline terdaftar dari ",jenis," ",matkul)
+        if(row[5]=="FALSE"):
+            deadlineTugas = datetime.datetime.strptime(row[1],"%m/%d/%Y")
+            deadlineTugas = deadlineTugas.timetuple().tm_yday
+            if((deadlineTugas >= hariSatu) and (deadlineTugas <= hariDua)):
+                print(row)
+    
+def tampilDeadline(matkul):
+    for row in arrayDB:
+        if(row[2]==matkul):
+            print(row[1])
+
+def tampilJenis(tugas):
+    for row in arrayDB:
+        if(row[3]==tugas):
+            print(row)
 
 def updateTanggal(id,tanggal):
     for row in arrayDB:
@@ -59,7 +95,6 @@ Udang Mayones merupakan salah satu menu favorit di restoran chinese atau restora
 Udang digoreng renyah dengan balutan tepung dipadukan dengan campuran saus mayones yang segar. 
 Ternyata menu restoran ini sangat mudah dibuat asalkan tahu tips & tricksnya. 
 Cocok dijadikan camilan atau lauk untuk anak-anak dan keluarga di rumah.
-
 Langkah:
 1.  Belah udang menjadi potongan butterfly
 2.  Masukkan jahe halus, baking soda, putih telur, garam, merica, dan sedikit tepung maizena. 
@@ -71,69 +106,7 @@ Langkah:
 6.  Goreng udang hingga matang, angkat lalu tiriskan
 7.  Campur udang goreng dengan dynamite mayo, aduk rata
 8.  Siapkan bihun jagung goreng, garnish dengan biji wijen hitam dan daun bawang. Udang Mayones siap disajikan
-
     ''')
-
-def patternMatching(pattern,teks):#Boyer-Moore
-    m=len(pattern)
-    n=len(teks)
-    i=m-1
-    dict={}
-    for a in range(m):
-        dict[pattern[a]]=a
-
-    if(i>n-1):
-        return False
-    j=m-1
-    while (i<n):
-        if(pattern[j]==teks[i]):
-            if(j==0):
-                return True
-            else:
-                i=i-1
-                j=j-1
-        else:
-            if (teks[i] in dict):
-                lo = dict[teks[i]]
-            else:
-                lo = -1
-            i = i + m - min(j, 1+lo)
-            j = m-1
-    return False
-
-#keyword jenis task
-task=["ujian","kuis","tugas","tubes","tucil"]
-
-#keyword satuan waktu:
-times=["hari","minggu"]
-
-#keyword selesai:
-doneList=["sudah","telah","selesai","beres"]
-
-#list pencocokan
-def isNewTask(input):
-    for task in tasks:
-        if (patternMatching(task,input)==True):
-            return True
-    return False
-
-def isDeadlineList(input):
-    return (patternMatching("deadline",input)==True)
-
-def isDeadlineTask(input):
-    return  (patternMatching("kapan",input))
-
-def isUndurTask(input):
-    return (patternMatching("undur",input))
-
-def isDoneTask(input):
-    for pattern in doneList:
-        if (patternMatching(pattern, input)==True):
-            return True
-    return False
-
-def isHelp(input):
-    return (patternMatching("bantu",input) || patternMatching("help",input))
 
 def chat():
     command = input().lower()
@@ -142,47 +115,33 @@ def chat():
         command = input().lower()
 
 def reply(command):
-    if (isHelp(command)):
-        tampilHelp()
-    elif (isUndurTask(command)):
-        x = re.findall("task \d+", command)
-        y = re.findall("../../....")
-        if (x == []):
-            print("maaf sepertinya anda lupa menulis task mana yang ingin diundur")
-        elif (y == []):
-            print("anda belum menuliskan tasknya mau diundur ke tanggal berapa")
-        else:
-            z = re.findall("\d+",x[0])
-            updateTanggal(z[0],y[0])
-    elif(isDoneTask(command)):
-        x = re.findall("task \d+", command)
-        if (x==[]):
-            print("Apakah Anda lupa memasukkan task mana yang sudah selesai dikerjakan?")
-        else:
-            id=re.findall("\d+",x[0])
-            done(id)
-    elif(isDeadlineTask(command)):
-        x = re.findall("tugas|tubes|tucil|ujian|kuis")
-        y = re.findall("if\d+|ku\d+")
-        if(x==[] && y==[]):
-            print("sepertinya kami tidak mengenal format yang anda masukkan")
-        elif (x==[]):
-            print("jenis task apa yang ingin anda ketahui deadlinenya")
-        elif (y==[]):
-            print("mata kuliah apa yang ingin anda ketahui deadline ",x[0],"nya")
-        else:
-            tampilDeadline(x[0],y[0])
-    elif(isDeadlineList(command)):
-        x
-
-
+    for key,value in fungsi.items():
+        intent = key
+        pattern = value
+        found_match = re.match(pattern, command)
+        if found_match and intent =='tambahTugas':
+            return tambahTugas('4/24/2021','OOP','Tubes','engimon')
+        elif found_match and intent =='tampilTugas':
+            return tampilTugas()
+        elif found_match and intent == 'tampilDeadline':
+            return tampilDeadline(matkul)
+        elif found_match and intent == 'updateTanggal':
+            return updateTanggal(28, "4/28/2021")
+        elif found_match and intent == 'done':
+            return done(25)
+        elif found_match and intent == 'help':
+            return tampilHelp()
     else:
         print("punten kang aing teu ngertos maneh ngomong naon")
 
+arrayDB = bacaDB()
 
-
-
-
-
-
-
+tampilTugasDayToDay(120)
+print("-----------------")
+tampilTugasDayToDay(120,90)
+# tambahTugas('4/24/2021','OOP','Tubes','engimon')
+# updateTanggal(26, "4/30/2021")
+# done(25)
+# tampilTugas()
+# tampilHelp()
+chat()
