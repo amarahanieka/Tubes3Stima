@@ -1,6 +1,7 @@
 import csv
 import re
 import datetime
+import difflib
 
 currdate = (datetime.datetime.now()).timetuple().tm_yday            #ngambil tanggal saat ini sebagai hari ke n dari awal tahun
 tasks=["ujian","kuis","pr","tubes","tucil"]                         #keyword jenis task
@@ -9,6 +10,8 @@ doneList=["sudah","telah","selesai","beres", "udah"]                #keyword sel
 taskList = "pr|tubes|tucil|ujian|kuis"                              #taskList
 deadlineKey = ["apa saja","apa aja", "sebutkan"]                    #keyword deadline
 undurKey = ["undur","ubah", "ganti", "pindah"]                      #keyword undur
+
+dictioneri = ["ujian","kuis","pr","tubes","tucil","hari","tanggal","minggu","sudah","telah","selesai","beres", "udah","saja", "sebutkan","undur","ubah", "ganti", "pindah"]
 
 
 def DatetoInt(tanggal): #mengubah dari tanggal menjadi hari ke n dari awal tahun terus ngereturn integer hari ke n dari awal 
@@ -25,6 +28,17 @@ def bacaDB(): # membaca database terus ngereturn list deadlinenya
         for row in reader:
             listMatkul.append(row)
     return listMatkul
+
+def mirip(a,b):
+    return difflib.SequenceMatcher(a=a.lower(),b=b.lower()).ratio()
+
+
+def karakterUseless(text):
+    textbaru = text
+    for ch in ['\\',',','?','`','`','*','_','{','}','[',']','(',')','>','#','+','-','.','!','$','\'']:
+        if ch in text:
+            textbaru = textbaru.replace(ch,'')
+    return textbaru
 
 def tambahTugas(tanggal, matkul, jenis, topik): # fungsi untuk memasukkan tugas baru ke data base
     with open('databasenew.csv','a',newline='') as DB:
@@ -292,8 +306,16 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
                 tambahTugas(tanggal[0], matkul[0], jenis[0], topik)
                 print("insertion success") # kalo sukses print sukses
     else:
-        print("Task tidak dikenali") # kalo command nggak mengandung keyword apapun print ini
-
+        katayangbenar = command
+        kata = karakterUseless(command).split(' ')
+        for a in kata:
+            for b in dictioneri:
+                if(mirip(a,b)>=0.6):
+                    katayangbenar = katayangbenar.replace(a,b)
+        if(katayangbenar != command):
+            print("mungkin maksud anda "+ '"'+katayangbenar+'"')
+        else :
+            print("command tidak ditemukan") # kalo command nggak mengandung keyword apapun print ini
 
 arrayDB=bacaDB()
 chat()
