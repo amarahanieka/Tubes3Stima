@@ -244,7 +244,9 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
         if(x!=[] or y!=[]):# kalo keywordny mengandung jenis task atau kata deadline 
             deadlineHari=re.findall("\d+ hari ke\s*depan",command)
             deadlineMinggu=re.findall("\d+ minggu ke\s*depan",command)
+            deadlineMingguini=re.findall("minggu ini",command)
             todayDeadline = re.findall("hari ini",command)
+            BesokDeadline = re.findall("besok",command)
             fromDaytoDay = re.findall("../../....",command)
             
             if (deadlineHari):# cek apakah mau nampilin deadline n hari ke depan klo iy masukkin list deadlineny ke listDeadline dan tandain printed sebagai true 
@@ -256,7 +258,14 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
                 days=re.findall("\d+",deadlineMinggu[0])[0]
                 listDeadline = tampilTugasDayToDay(currdate+int(days)*7,currdate)                
                 ListDeadline += ArrayToText1(tampilTugasDayToDay(currdate+int(days)*7,currdate))
-
+                printed=True
+            elif(deadlineMingguini):# ini bagian n minggu ke depan prinsipny kek n hari ke depantapi kali 7
+                listDeadline = tampilTugasDayToDay(currdate+7,currdate)                
+                ListDeadline += ArrayToText1(tampilTugasDayToDay(currdate+7,currdate))
+                printed=True
+            elif(BesokDeadline):# ini bagian n minggu ke depan prinsipny kek n hari ke depantapi kali 7
+                listDeadline = tampilTugasDayToDay(currdate+1,currdate+1)                
+                ListDeadline += ArrayToText1(tampilTugasDayToDay(currdate+1,currdate+1))
                 printed=True
             elif(todayDeadline): # bagian ini buat yg cek deadline hari ini
                 listDeadline = tampilTugasDayToDay(currdate)
