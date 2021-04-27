@@ -2,9 +2,19 @@ import csv
 import re
 import datetime
 
-currdate = (datetime.datetime.now()).timetuple().tm_yday #ngambil tanggal saat ini sebagai hari ke n dari awal tahun
+currdate = (datetime.datetime.now()).timetuple().tm_yday            #ngambil tanggal saat ini sebagai hari ke n dari awal tahun
+tasks=["ujian","kuis","pr","tubes","tucil"]                         #keyword jenis task
+times=["hari","minggu"]                                             #keyword satuan waktu:
+doneList=["sudah","telah","selesai","beres", "udah"]                #keyword selesai:
+taskList = "pr|tubes|tucil|ujian|kuis"                              #taskList
+deadlineKey = ["apa saja","apa aja", "sebutkan"]                    #keyword deadline
+undurKey = ["undur","ubah", "ganti", "pindah"]                      #keyword undur
 
-def DatetoInt(tanggal): #mengubah dari tanggal menjadi hari ke n dari awal tahun terus ngereturn integer hari ke n dari awal tahun
+
+def DatetoInt(tanggal): #mengubah dari tanggal menjadi hari ke n dari awal tahun terus ngereturn integer hari ke n dari awal 
+    tanggal = tanggal.strip()
+    if(tanggal[1]=='/'):
+        tanggal = '0'.strip() + tanggal.strip()
     tanggal = datetime.datetime.strptime(tanggal,"%m/%d/%Y")
     return tanggal.timetuple().tm_yday
 
@@ -18,8 +28,9 @@ def bacaDB(): # membaca database terus ngereturn list deadlinenya
 
 def tambahTugas(tanggal, matkul, jenis, topik): # fungsi untuk memasukkan tugas baru ke data base
     with open('databasenew.csv','a',newline='') as DB:
+        tanggal = tanggal.strip()
         writer = csv.writer(DB)
-        newTugas = [str(len(arrayDB)),tanggal,matkul.upper(),jenis.upper(),topik,"FALSE"]
+        newTugas = [str(len(arrayDB)),tanggal,matkul.upper(),jenis.lower(),topik,"FALSE"]
         arrayDB.append(newTugas)
         writer.writerow(newTugas)
 
@@ -38,16 +49,23 @@ def tampilTugasDayToDay(hariDua, hariSatu=currdate): #fungsi untuk menampilkan d
                 temp.append(row)
     return temp
 
-def tampilDeadline(jenis,matkul): #berfungsi untuk menampilkan deadline dari matkul dengan jenis yg diinputkan
+def tampilDeadline(jenis,matkul='all'): #berfungsi untuk menampilkan deadline dari matkul dengan jenis yg diinputkan
     isExist=False
-    for row in arrayDB:
-        if(row[2].lower()==matkul and row[3].lower()==jenis):
-            print(row[1],row[4])
-            isExist=True
+    if(matkul!='all'):
+        for row in arrayDB:
+            if(row[2].lower()==matkul and row[3].lower()==jenis):
+                print(row[1],row[4])
+                isExist=True
+    else:
+        for row in arrayDB:
+            if(row[3].lower()==jenis):
+                print(row[1],row[4])
+                isExist=True 
     if isExist==False:
         print("tidak ada deadline terdaftar dari ",jenis," ",matkul)
 
 def updateTanggal(id,tanggal):#berfungsi mengupdate task dengan ID id ke tanggal sesuai parameter
+    tanggal = tanggal.strip()
     for row in arrayDB:
         if(row[0]==str(id)):
             row[1]=tanggal
@@ -56,6 +74,7 @@ def updateTanggal(id,tanggal):#berfungsi mengupdate task dengan ID id ke tanggal
         mywriter.writerows(arrayDB)
 
 def isInDB(tanggal,matkul,jenis): #return boolean true jika ditemukan di db 
+    tanggal = tanggal.strip()
     for row in arrayDB:
         if (row[1]==tanggal and row[2].lower()==matkul and row[3].lower()==jenis):
             return True
@@ -117,17 +136,6 @@ def patternMatching(pattern,teks):#Boyer-Moore
             j = m-1
     return False
 
-#keyword jenis task
-tasks=["ujian","kuis","tugas","tubes","tucil"]
-
-#keyword satuan waktu:
-times=["hari","minggu"]
-
-#keyword selesai:
-doneList=["sudah","telah","selesai","beres"]
-
-#taskList
-taskList = "tugas|tubes|tucil|ujian|kuis"
 
 #list pencocokan
 def isNewTask(input): #mengecek apakah mengandung keyword untuk menambahkan task baru
@@ -137,13 +145,19 @@ def isNewTask(input): #mengecek apakah mengandung keyword untuk menambahkan task
     return False
 
 def isDeadlineList(input): #mengecek apakah mengandung keyword untuk menampilkan list deadline
-    return (patternMatching("apa saja",input))
+    for DKey in deadlineKey: 
+        if (patternMatching(DKey,input)==True):
+            return True
+    return False
 
 def isDeadlineTask(input): #mengecek apakah mengandung keyword untuk menampilkan waktu deadline dari suatu task
     return  (patternMatching("kapan",input))
 
 def isUndurTask(input): #mengecek apakah mengandung keyword untuk mengundur task
-    return (patternMatching("undur",input))
+    for uKey in undurKey: 
+        if (patternMatching(uKey,input)==True):
+            return True
+    return False
 
 def isDoneTask(input): # mengecek apakah mengandung keyword untuk megubah status task 
     for pattern in doneList:
@@ -152,11 +166,11 @@ def isDoneTask(input): # mengecek apakah mengandung keyword untuk megubah status
     return False
 
 def isHelp(input): # mengecek apakah mengandung keyword untuk menampilkan bantuan
-    return ((patternMatching("bantu",input)) or (patternMatching("help",input)))
+    return ((patternMatching("bantu",input)) or (patternMatching("help",input)) or (patternMatching("perintah",input)))
 
 def chat(): # main programnya gitu jadi ngeloop buat minta input terus sampe di input "STOP YA BEROW" baru berhenti loop
     command = input().lower()
-    while (command != "STOP YA BEROW"):
+    while (command != "stop ya berow"):
         reply(command)
         command = input().lower()
 
@@ -166,7 +180,7 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
         tampilHelp()
 
     elif (isUndurTask(command)): # kalo isUndurTask dari input bernilai true 
-        x = re.findall("task \d+", command)
+        x = re.findall("task \d+", command) + (re.findall("id \d+", command)) + (re.findall("tugas \d+", command))
         y = re.findall("../../....",command)
         if (x == []):           #kalo ga ketemu task yg ingin diundur print task ga ditemukan gt
             print("maaf sepertinya anda lupa menulis task mana yang ingin diundur")
@@ -174,17 +188,23 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
             print("anda belum menuliskan tasknya mau diundur ke tanggal berapa")
         else:                   #kalo ketemu task dan tanggalnya update tanggal di db terus print task telah diundur
             z = re.findall("\d+",x[0])
-            updateTanggal(z[0],y[0])
-            print("Task telah diundur")
+            if (z != []):
+                updateTanggal(z[0],y[0])
+                print("Task telah diundur")
+            else :
+                print("Tidak ada task tersebut di list task.")
 
     elif(isDoneTask(command)): # kalo isDoneTask dari input bernilai true 
-        x = re.findall("task \d+", command)
+        x = re.findall("task \d+", command) + re.findall("id \d+", command) + re.findall("tugas \d+", command)
         if (x==[]):     # cek kalo misal ga ada keyword task yg mana yg pengen diubah statusnya print gt klo tasknya belom terdeteksi
             print("Apakah Anda lupa memasukkan task mana yang sudah selesai dikerjakan?")
         else:       #kalo ketemu keyword tasknya update status task dengan id itu di db terus print kalo sudah ditandai selesai
-            id=re.findall("\d+",x[0])[0]
-            done(id)
-            print("oke task sudah ditandai sebagai telah selesai")
+            id=re.findall("\d+",x[0])
+            if(id != []):
+                done(id[0])
+                print("oke task sudah ditandai sebagai telah selesai")
+            else:
+                print("Tidak ada task tersebut di list task.")
 
     elif(isDeadlineTask(command)): # kalo isDeadlineTask dari input true
         x = re.findall(taskList,command)
@@ -194,7 +214,7 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
         elif (x==[]): # kalo misal jenis taskny ga ketemu print jenisnya ga tau gt
             print("jenis task apa yang ingin anda ketahui deadlinenya")
         elif (y==[]): # sama kek bagian jenis task tapi ini matkul
-            print("mata kuliah apa yang ingin anda ketahui deadline ",x[0],"nya")
+            tampilDeadline(x[0])
         else: # kalo keyword lengkap tampilin deadline dari matkul dan jenis task itu
             tampilDeadline(x[0],y[0])
 
@@ -259,16 +279,20 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
         if topic_quoted!=[]:
             topik = re.sub("'","",topic_quoted[0])
         else:
-            topik=""
+            topic_quoted = re.findall("tentang [^\n]+",command)
+            if topic_quoted!=[]:
+                topik = re.sub("'","",topic_quoted[0])
+                topik = topik.replace("tentang ","")
+            else:
+                topik=""
         if(tanggal!=[] and matkul!=[] and jenis!=[] and topik!=[]):
             if(isInDB(tanggal[0],matkul[0],jenis[0])==True):
-                print("Task tersebut sudah tercatat, insertion failed") #kalo sudah ad di db print ke layar 
+                print("Task tersebut sudah pernah tercatat, insertion failed") #kalo sudah ad di db print ke layar 
             else:
                 tambahTugas(tanggal[0], matkul[0], jenis[0], topik)
                 print("insertion success") # kalo sukses print sukses
     else:
-        print("punten kang aing teu ngertos maneh ngomong naon") # kalo command nggak mengandung keyword apapun print ini
-
+        print("Task tidak dikenali") # kalo command nggak mengandung keyword apapun print ini
 
 
 arrayDB=bacaDB()
