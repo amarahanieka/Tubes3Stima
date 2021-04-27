@@ -32,7 +32,7 @@ def bacaDB(): # membaca database terus ngereturn list deadlinenya
 def mirip(a,b):
     return difflib.SequenceMatcher(a=a.lower(),b=b.lower()).ratio()
 
-
+print(mirip("sebuah","sudah"))
 def karakterUseless(text):
     textbaru = text
     for ch in ['\\',',','?','`','`','*','_','{','}','[',']','(',')','>','#','+','-','.','!','$','\'']:
@@ -310,7 +310,7 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
         kata = karakterUseless(command).split(' ')
         for a in kata:
             for b in dictioneri:
-                if(mirip(a,b)>=0.6):
+                if(mirip(a,b)>=0.75):
                     katayangbenar = katayangbenar.replace(a,b)
         if(katayangbenar != command):
             print("mungkin maksud anda "+ '"'+katayangbenar+'"')

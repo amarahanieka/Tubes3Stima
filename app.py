@@ -53,11 +53,11 @@ def tambahTugas(tanggal, matkul, jenis, topik): # fungsi untuk memasukkan tugas 
         writer.writerow(newTugas)
 
 def tampilTugas(): # fungsi untuk menampilkan semua tugas yang belum beres
-    isistr = ""
+    isi= []
     for row in arrayDB:
         if(row[5]=="FALSE"):
-            isistr += row[0] + ') ' + row[1] + ' • ' + row[2] + ' • ' + row[3]  + ' • ' + row[4] + "<br>"
-    return isistr
+            isi.append(row)
+    return isi
 
 def tampilTugasDayToDay(hariDua, hariSatu=currdate): #fungsi untuk menampilkan daftar deadline diantara 2 tanggal ngereturn list deadline
     temp=[]
@@ -68,13 +68,7 @@ def tampilTugasDayToDay(hariDua, hariSatu=currdate): #fungsi untuk menampilkan d
             deadlineTugas = deadlineTugas.timetuple().tm_yday
             if((deadlineTugas >= hariSatu) and (deadlineTugas <= hariDua)):
                 temp.append(row)
-    for isi in temp:
-        isistr = isi[0] + ') ' + isi[1] + ' • ' + isi[2] + ' • ' + isi[3]  + ' • ' + isi[4]
-        tempstr += isistr + " <br>"
-    tempstr = tempstr.replace("FALSE", "")
-    if (tempstr == ""):
-        return "Tidak ada deadline."
-    return tempstr
+    return temp
 
 def tampilDeadline(jenis,matkul='all'): #berfungsi untuk menampilkan deadline dari matkul dengan jenis yg diinputkan
     isExist=False
@@ -187,6 +181,15 @@ def chat(): # main programnya gitu jadi ngeloop buat minta input terus sampe di 
     while (command != "stop ya berow"):
         reply(command)
         command = input().lower()
+def ArrayToText1(arraynya):
+    tempstr = ""
+    for isi in arraynya:
+        isistr = isi[0] + ') ' + isi[1] + ' • ' + isi[2] + ' • ' + isi[3]  + ' • ' + isi[4]
+        tempstr += isistr + " <br>"
+    tempstr = tempstr.replace("FALSE", "")
+    if (tempstr == ""):
+        return "Tidak ada deadline."
+    return tempstr
 
 def reply(command):#command nih input dari penggunanya yg nanti kita tentukan maksudnya mau ngapain di botnya
 
@@ -235,6 +238,8 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
     elif(isDeadlineList(command)):
         x = re.findall("deadline",command)
         y = re.findall(taskList,command)
+        listDeadline=[]
+        ListDeadline=""
         printed=False
         if(x!=[] or y!=[]):# kalo keywordny mengandung jenis task atau kata deadline 
             deadlineHari=re.findall("\d+ hari ke\s*depan",command)
@@ -242,47 +247,55 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
             todayDeadline = re.findall("hari ini",command)
             fromDaytoDay = re.findall("../../....",command)
             
-            listDeadline=""
-            
             if (deadlineHari):# cek apakah mau nampilin deadline n hari ke depan klo iy masukkin list deadlineny ke listDeadline dan tandain printed sebagai true 
                 days=re.findall("\d+",deadlineHari[0])[0]
-                listDeadline += tampilTugasDayToDay(currdate+int(days),currdate)
+                listDeadline = tampilTugasDayToDay(currdate+int(days),currdate)
+                ListDeadline += ArrayToText1(tampilTugasDayToDay(currdate+int(days),currdate))
                 printed=True
             elif(deadlineMinggu):# ini bagian n minggu ke depan prinsipny kek n hari ke depantapi kali 7
                 days=re.findall("\d+",deadlineMinggu[0])[0]
-                listDeadline += tampilTugasDayToDay(currdate+int(days)*7,currdate)
+                listDeadline = tampilTugasDayToDay(currdate+int(days)*7,currdate)                
+                ListDeadline += ArrayToText1(tampilTugasDayToDay(currdate+int(days)*7,currdate))
+
                 printed=True
             elif(todayDeadline): # bagian ini buat yg cek deadline hari ini
-                listDeadline += tampilTugasDayToDay(currdate)
+                listDeadline = tampilTugasDayToDay(currdate)
+                ListDeadline += ArrayToText1(tampilTugasDayToDay(currdate))
                 printed=True
             elif(len(fromDaytoDay)==2): # kalo ini dari 2 tanggal berbeda
-                listDeadline += tampilTugasDayToDay(DatetoInt(fromDaytoDay[1]),DatetoInt(fromDaytoDay[0]))
+                listDeadline = tampilTugasDayToDay(DatetoInt(fromDaytoDay[1]),DatetoInt(fromDaytoDay[0]))
+                ListDeadline += ArrayToText1(tampilTugasDayToDay(DatetoInt(fromDaytoDay[1]),DatetoInt(fromDaytoDay[0])))
                 printed=True
+            else:
+                listDeadline = tampilTugas()
+                ListDeadline += ArrayToText1(tampilTugas())
+                printed=True
+            
 
             listDeadline2=[] # ini buat nyimpen deadline yang jenis taskny ditemukan di command
             if(y!=[]):#kalo ketemu keyword jenis taskny
+                print(listDeadline)
                 for item in listDeadline:
                     if(item[3].lower()==y[0]):
                         listDeadline2.append(item) # masukkin deadline yg jenis taskny sm dengan keyword yang ditemukan ke listDeadline2
                 if(listDeadline2!=[]):# kalo listDeadline2 ndak kosong print isiny
-                    for row in listDeadline2:
-                        return(row)
+                    return ArrayToText1((listDeadline2))
                 else: #kalo kosong print ga ada deadline yg ditemukan
                     return("tidak ada deadline yang ditemukan")
 
             else: # kalo ga ketemu keyword jenis tasknya
-                if (listDeadline!=""): #kalo ad deadline yg bs di print kita print ke layar
+                if (ListDeadline!=""): #kalo ad deadline yg bs di print kita print ke layar
                     # deadlineprint = "".join(listDeadline)
                     # for item in listDeadline:
                     #     deadlineprint += item
-                    return (listDeadline)
+                    return (ListDeadline)
                     # print("deadlineprint", deadlineprint)
                     # print("anjir")
                         # return(item)
 
-                if(listDeadline==""): # kalo ga ada
+                if(ListDeadline==""): # kalo ga ada
                     if(x[0]=="deadline" and printed==False): #kalo mengandung keyword deadline berarti kan bs general kita print seluruh deadline karena ga masuk ke keyword waktu manapun
-                        return tampilTugas()
+                        return ArrayToText1(tampilTugas())
                     else: # kalo ga ada keyword deadline dan kosong listDeadlinenya print kalo ga ada deadline
                         return("Tidak ada deadline yang ditemukan pada rentang tersebut")
 
@@ -314,7 +327,7 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
         kata = karakterUseless(command).split(' ')
         for a in kata:
             for b in dictioneri:
-                if(mirip(a,b)>=0.6):
+                if(mirip(a,b)>=0.75):
                     katayangbenar = katayangbenar.replace(a,b)
         if(katayangbenar != command):
             return("mungkin maksud anda "+ '"'+katayangbenar+'"')
