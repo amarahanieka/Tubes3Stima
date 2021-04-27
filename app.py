@@ -1,11 +1,24 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, abort
 import csv
 import re
 import datetime
 import difflib
+import os
+
+from linebot import (
+    LineBotApi, WebhookHandler
+)
+from linebot.exceptions import (
+    InvalidSignatureError
+)
+from linebot.models import *
 
 app = Flask(__name__)
 app.static_folder = 'static'
+# Channel Access Token
+line_bot_api = LineBotApi('x7ssKkqI8hm6utdM1WJn635QPY6FcjlwXjtkjlskFiAZSpiVAixz2EVjOGUO/QIXF2iy9YiM8kQ+61y4qQ1y+m4JEyLNEtATLEE5esYtmrUjDD8tZbTDKq1+HLjTmclrrw5wvgtAGxhlJI2NkrRrxQdB04t89/1O/w1cDnyilFU=')
+# Channel Secret
+handler = WebhookHandler('8403ef9dfaa3dbf9ad6945784ca550d5')
 
 currdate = (datetime.datetime.now()).timetuple().tm_yday            #ngambil tanggal saat ini sebagai hari ke n dari awal tahun
 tasks=["ujian","kuis","pr","tubes","tucil"]                         #keyword jenis task
@@ -120,7 +133,8 @@ def tampilHelp():
 <li>Menandai tugas sudah selesai: 'beres', 'selesai', 'telah', dan nomor tugas</li> <br>
 <li>Menambah deadline matkul: 'ujian' or 'tubes' or 'tugas' or 'tucil' or 'kuis' + kode matkul + tanggal dalam format mm/dd/yyyy</li> <br>
 <li>Menampilkan deadline: 'apa saja' + x hari / x minggu / hari ini / besok / minggu ini + tanggal deadline (mm/dd/yyyy) + jenis task (opsional)</li> <br>
-<li>Nambah deadline: kode mata kuliah + 'ujian' or 'tubes' or 'tugas' or 'tucil' + mm/dd/yyyy + topik task menggunakan single quote (cth: 'milestone 3')</li> <br>''')
+<li>Nambah deadline: kode mata kuliah + 'ujian' or 'tubes' or 'tugas' or 'tucil' + mm/dd/yyyy + topik task menggunakan single quote (cth: 'milestone 3')</li> <br>
+<li>Add ID line : @550fgvpw untuk some surprise </li> <br>''')
 
 def patternMatching(pattern,teks):#Boyer-Moore
     m=len(pattern)
@@ -365,5 +379,26 @@ def get_bot_response():
     jawaban = (reply(userText.lower()))
     return jawaban
 
+
+
+@app.route("/callback", methods=['POST'])
+def callback():
+    signature = request.headers['X-Line-Signature']
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+    return 'OK'
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    text=event.message.text
+    hasil = (reply(text.lower())).replace("<br>","\n").replace("<li>","•").replace("</li>","")
+    message = TextSendMessage(hasil)
+    line_bot_api.reply_message(event.reply_token, message)
+
 if __name__ == "__main__":
-    app.run() 
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
