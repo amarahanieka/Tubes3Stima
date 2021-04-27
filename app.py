@@ -115,7 +115,12 @@ def done(id):#mengeset deadline dengan id sesuai parameter input menjadi true
         mywriter.writerows(arrayDB)
 
 def tampilHelp():
-    return("nih bantuan")
+    return('''Gunakan keyword dibawah untuk mendapatkan hasil yang diinginkan <br>
+- Untuk mengundur: 'undur' bersama dengan nomor tugas <br>
+- Menandai tugas sudah selesai: 'beres', 'selesai', 'telah', dan nomor tugas <br>
+- Menambah deadline matkul: 'ujian' or 'tubes' or 'tugas' or 'tucil' or 'kuis' + kode matkul + tanggal dalam format mm/dd/yyyy <br>
+- Menampilkan deadline: 'apa saja' + x hari / x minggu / hari ini / besok / minggu ini + tanggal deadline (mm/dd/yyyy) + jenis task (opsional) <br>
+- Nambah deadline: kode mata kuliah + 'ujian' or 'tubes' or 'tugas' or 'tucil' + mm/dd/yyyy + topik task menggunakan single quote (cth: 'milestone 3') <br>''')
 
 def patternMatching(pattern,teks):#Boyer-Moore
     m=len(pattern)
