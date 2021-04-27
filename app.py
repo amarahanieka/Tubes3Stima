@@ -116,11 +116,11 @@ def done(id):#mengeset deadline dengan id sesuai parameter input menjadi true
 
 def tampilHelp():
     return('''Gunakan keyword dibawah untuk mendapatkan hasil yang diinginkan <br>
-- Untuk mengundur: 'undur' bersama dengan nomor tugas <br>
-- Menandai tugas sudah selesai: 'beres', 'selesai', 'telah', dan nomor tugas <br>
-- Menambah deadline matkul: 'ujian' or 'tubes' or 'tugas' or 'tucil' or 'kuis' + kode matkul + tanggal dalam format mm/dd/yyyy <br>
-- Menampilkan deadline: 'apa saja' + x hari / x minggu / hari ini / besok / minggu ini + tanggal deadline (mm/dd/yyyy) + jenis task (opsional) <br>
-- Nambah deadline: kode mata kuliah + 'ujian' or 'tubes' or 'tugas' or 'tucil' + mm/dd/yyyy + topik task menggunakan single quote (cth: 'milestone 3') <br>''')
+<li>Untuk mengundur: 'undur' bersama dengan nomor tugas</li> <br>
+<li>Menandai tugas sudah selesai: 'beres', 'selesai', 'telah', dan nomor tugas</li> <br>
+<li>Menambah deadline matkul: 'ujian' or 'tubes' or 'tugas' or 'tucil' or 'kuis' + kode matkul + tanggal dalam format mm/dd/yyyy</li> <br>
+<li>Menampilkan deadline: 'apa saja' + x hari / x minggu / hari ini / besok / minggu ini + tanggal deadline (mm/dd/yyyy) + jenis task (opsional)</li> <br>
+<li>Nambah deadline: kode mata kuliah + 'ujian' or 'tubes' or 'tugas' or 'tucil' + mm/dd/yyyy + topik task menggunakan single quote (cth: 'milestone 3')</li> <br>''')
 
 def patternMatching(pattern,teks):#Boyer-Moore
     m=len(pattern)
