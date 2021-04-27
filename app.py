@@ -266,6 +266,10 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
                 listDeadline = tampilTugasDayToDay(DatetoInt(fromDaytoDay[1]),DatetoInt(fromDaytoDay[0]))
                 ListDeadline += ArrayToText1(tampilTugasDayToDay(DatetoInt(fromDaytoDay[1]),DatetoInt(fromDaytoDay[0])))
                 printed=True
+            elif(len(fromDaytoDay)==1): # kalo ini dari 1 tanggal berbeda
+                listDeadline = tampilTugasDayToDay(DatetoInt(fromDaytoDay[0]),DatetoInt(fromDaytoDay[0]))
+                ListDeadline += ArrayToText1(tampilTugasDayToDay(DatetoInt(fromDaytoDay[0]),DatetoInt(fromDaytoDay[0])))
+                printed=True
             else:
                 listDeadline = tampilTugas()
                 ListDeadline += ArrayToText1(tampilTugas())
@@ -274,7 +278,6 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
 
             listDeadline2=[] # ini buat nyimpen deadline yang jenis taskny ditemukan di command
             if(y!=[]):#kalo ketemu keyword jenis taskny
-                print(listDeadline)
                 for item in listDeadline:
                     if(item[3].lower()==y[0]):
                         listDeadline2.append(item) # masukkin deadline yg jenis taskny sm dengan keyword yang ditemukan ke listDeadline2
