@@ -89,15 +89,19 @@ def tampilDeadline(jenis,matkul='all'): #berfungsi untuk menampilkan deadline da
     if(matkul!='all'):
         for row in arrayDB:
             if(row[2].lower()==matkul and row[3].lower()==jenis):
-                deadlinestr += row[1] +" "+ row[4] + " ("+ row[2] + ")" + "<br>"
+                deadlineTugas = datetime.datetime.strptime(row[1],"%m/%d/%Y")
+                deadlineTugas = deadlineTugas.timetuple().tm_yday
+                if (deadlineTugas >= currdate):
+                    deadlinestr += row[1] +" "+ row[4] + " ("+ row[2] + ")" + "<br>"
         return deadlinestr
-                # return(row[1],row[4])
         isExist=True
     else:
         for row in arrayDB:
             if(row[3].lower()==jenis):
-                # return(row[1],row[4])
-                deadlinestr += row[1] +" "+ row[4] + " ("+ row[2] + ")" + "<br>"
+                deadlineTugas = datetime.datetime.strptime(row[1],"%m/%d/%Y")
+                deadlineTugas = deadlineTugas.timetuple().tm_yday
+                if (deadlineTugas >= currdate):
+                    deadlinestr += row[1] +" "+ row[4] + " ("+ row[2] + ")" + "<br>"
         return deadlinestr
         isExist=True 
     if isExist==False:
@@ -316,13 +320,7 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
 
             else: # kalo ga ketemu keyword jenis tasknya
                 if (ListDeadline!=""): #kalo ad deadline yg bs di print kita print ke layar
-                    # deadlineprint = "".join(listDeadline)
-                    # for item in listDeadline:
-                    #     deadlineprint += item
                     return (ListDeadline)
-                    # print("deadlineprint", deadlineprint)
-                    # print("anjir")
-                        # return(item)
 
                 if(ListDeadline==""): # kalo ga ada
                     if(x[0]=="deadline" and printed==False): #kalo mengandung keyword deadline berarti kan bs general kita print seluruh deadline karena ga masuk ke keyword waktu manapun
