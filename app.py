@@ -58,12 +58,17 @@ def karakterUseless(text):
     return textbaru
 
 def tambahTugas(tanggal, matkul, jenis, topik): # fungsi untuk memasukkan tugas baru ke data base
+    output = ""
     with open('databasenew.csv','a',newline='') as DB:
         tanggal = tanggal.strip()
+        if(tanggal[1]=='/'):
+            tanggal = '0'.strip() + tanggal.strip()
         writer = csv.writer(DB)
         newTugas = [str(len(arrayDB)),tanggal,matkul.upper(),jenis.lower(),topik,"FALSE"]
         arrayDB.append(newTugas)
         writer.writerow(newTugas)
+        output="Task berhasil dicatat, (ID ="+str(len(arrayDB)-1)+") - "+tanggal+" - "+matkul +" - "+jenis+" - "+topik
+    return output
 
 def tampilTugas(): # fungsi untuk menampilkan semua tugas yang belum beres
     isi= []
@@ -83,18 +88,19 @@ def tampilTugasDayToDay(hariDua, hariSatu=currdate): #fungsi untuk menampilkan d
                 temp.append(row)
     return temp
 
-def tampilDeadline(jenis,matkul='all'): #berfungsi untuk menampilkan deadline dari matkul dengan jenis yg diinputkan
+def tampilDeadline(jenis,matkul='apapun'): #berfungsi untuk menampilkan deadline dari matkul dengan jenis yg diinputkan
     isExist=False
     deadlinestr = ""
-    if(matkul!='all'):
+    if(matkul!='apapun'):
         for row in arrayDB:
             if(row[2].lower()==matkul and row[3].lower()==jenis):
                 deadlineTugas = datetime.datetime.strptime(row[1],"%m/%d/%Y")
                 deadlineTugas = deadlineTugas.timetuple().tm_yday
                 if (deadlineTugas >= currdate):
                     deadlinestr += row[1] +" "+ row[4] + " ("+ row[2] + ")" + "<br>"
-        return deadlinestr
-        isExist=True
+                    isExist=True
+        if(isExist):
+            return deadlinestr
     else:
         for row in arrayDB:
             if(row[3].lower()==jenis):
@@ -102,34 +108,55 @@ def tampilDeadline(jenis,matkul='all'): #berfungsi untuk menampilkan deadline da
                 deadlineTugas = deadlineTugas.timetuple().tm_yday
                 if (deadlineTugas >= currdate):
                     deadlinestr += row[1] +" "+ row[4] + " ("+ row[2] + ")" + "<br>"
-        return deadlinestr
-        isExist=True 
+                    isExist=True 
+        if(isExist):
+            return deadlinestr
     if isExist==False:
-        return("tidak ada deadline terdaftar dari ",jenis," ",matkul)
+        return("tidak ada deadline terdaftar dari "+str(jenis)+" "+str(matkul))
 
-def updateTanggal(id,tanggal):#berfungsi mengupdate task dengan ID id ke tanggal sesuai parameter
+def updateTanggal(idnya,tanggal):#berfungsi mengupdate task dengan ID id ke tanggal sesuai parameter
     tanggal = tanggal.strip()
+    if(tanggal[1]=='/'):
+        tanggal = '0'.strip() + tanggal.strip()
+    updated = False
+    output = ""
     for row in arrayDB:
-        if(row[0]==str(id)):
+        if(row[0]==str(idnya)):
             row[1]=tanggal
+            updated = True
     with open('databasenew.csv', 'w', newline='') as file:
         mywriter = csv.writer(file, delimiter=',')
         mywriter.writerows(arrayDB)
+    if(updated==False):
+        output +="tidak ada task "+str(idnya)+" dalam list"
+    else:
+        output+="task "+str(idnya)+" telah diundur ke "+str(tanggal)
+    return output
 
 def isInDB(tanggal,matkul,jenis): #return boolean true jika ditemukan di db 
     tanggal = tanggal.strip()
+    if(tanggal[1]=='/'):
+        tanggal = '0'.strip() + tanggal.strip()
     for row in arrayDB:
         if (row[1]==tanggal and row[2].lower()==matkul and row[3].lower()==jenis):
             return True
     return False
 
 def done(id):#mengeset deadline dengan id sesuai parameter input menjadi true
+    updated = False
+    output = ""
     for row in arrayDB:
         if(row[0]==str(id)):
+            updated = True
             row[5]='TRUE'
     with open('databasenew.csv', 'w', newline='') as file:
         mywriter = csv.writer(file, delimiter=',')
         mywriter.writerows(arrayDB)
+    if(updated==False):
+        output +="tidak ada task "+str(id)+" dalam list"
+    else:
+        output+="task "+str(id)+" telah diselesaikan"
+    return output
 
 def tampilHelp():
     return('''Gunakan keyword dibawah untuk mendapatkan hasil yang diinginkan <br>
@@ -222,6 +249,7 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
     elif (isUndurTask(command)): # kalo isUndurTask dari input bernilai true 
         x = re.findall("task \d+", command) + (re.findall("id \d+", command)) + (re.findall("tugas \d+", command))
         y = re.findall("../../....",command)
+        flag = ""
         if (x == []):           #kalo ga ketemu task yg ingin diundur print task ga ditemukan gt
             return("maaf sepertinya anda lupa menulis task mana yang ingin diundur")
         elif (y == []):         #kalo ga ketemu tanggal print kurang tanggal gt kek dia mau diundur ke tanggal brp
@@ -229,22 +257,19 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
         else:                   #kalo ketemu task dan tanggalnya update tanggal di db terus print task telah diundur
             z = re.findall("\d+",x[0])
             if (z != []):
-                updateTanggal(z[0],y[0])
-                return("Task telah diundur")
-            else :
-                return("Tidak ada task tersebut di list task.")
+                flag = updateTanggal(z[0],y[0])
+            return(flag)
 
     elif(isDoneTask(command)): # kalo isDoneTask dari input bernilai true 
         x = re.findall("task \d+", command) + re.findall("id \d+", command) + re.findall("tugas \d+", command)
+        flag = ""
         if (x==[]):     # cek kalo misal ga ada keyword task yg mana yg pengen diubah statusnya print gt klo tasknya belom terdeteksi
             return("Apakah Anda lupa memasukkan task mana yang sudah selesai dikerjakan?")
         else:       #kalo ketemu keyword tasknya update status task dengan id itu di db terus print kalo sudah ditandai selesai
             id=re.findall("\d+",x[0])
             if(id != []):
-                done(id[0])
-                return("oke task sudah ditandai sebagai telah selesai")
-            else:
-                return("Tidak ada task tersebut di list task.")
+                flag = done(id[0])
+        return(flag)
 
     elif(isDeadlineTask(command)): # kalo isDeadlineTask dari input true
         x = re.findall(taskList,command)
@@ -349,8 +374,7 @@ def reply(command):#command nih input dari penggunanya yg nanti kita tentukan ma
             if(isInDB(tanggal[0],matkul[0],jenis[0])==True):
                 return("Task tersebut sudah pernah tercatat, insertion failed") #kalo sudah ad di db print ke layar 
             else:
-                tambahTugas(tanggal[0], matkul[0], jenis[0], topik)
-                return ("insertion success") # kalo sukses print sukses
+                return tambahTugas(tanggal[0], matkul[0], jenis[0], topik)
     else:
         katayangbenar = command
         kata = karakterUseless(command).split(' ')
@@ -374,6 +398,7 @@ def home():
 @app.route("/get")
 def get_bot_response():
     userText = str(request.args.get('msg'))
+    arrayDB=bacaDB()
     jawaban = (reply(userText.lower()))
     return jawaban
 
