@@ -21,7 +21,7 @@ Program DFlat dibuat dengan memanfaatkan algoritma pencarian melebar (Breadth Fi
 <br/>
 
 ## Screenshots
-
+![screenshot program](./test/skrinsut.png)
 <br/>
 
 ## Setup
